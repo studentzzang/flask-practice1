@@ -15,7 +15,7 @@
   {% for todo in todos %}
   <li>
     {{ todo }}
-    <a href="{{ url_for('delete', index=loop.index0) }}">Delete</a>
+    <a href="{{ url_for('delete', id=todo.id) }}">삭제</a>
   </li>
   {% endfor %}
 </ul>
