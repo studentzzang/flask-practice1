@@ -3,19 +3,21 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://flask_user:password@localhost/flask_todo_db'
+# SQLite로 낼 거면 위 줄 대신 이 줄
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 db = SQLAlchemy(app)
 
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(100), nullable=False)
+    note = db.Column(db.String(200))   # HW3: 설명 칸
     done = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f'<Todo {self.id} {self.text}>'
 
 
-# 모델 정의 다음에 와야 테이블이 만들어짐
 with app.app_context():
     db.create_all()
 
@@ -23,12 +25,25 @@ with app.app_context():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        text = request.form['todo']
-        db.session.add(Todo(text=text))
+        todo = Todo(text=request.form['todo'],
+                    note=request.form['note'])   # HW3: note도 같이 저장
+        db.session.add(todo)
         db.session.commit()
         return redirect(url_for('index'))
     todos = Todo.query.all()
     return render_template('index.html', todos=todos)
+
+
+# HW3: 수정
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    todo = db.get_or_404(Todo, id)
+    if request.method == 'POST':
+        todo.text = request.form['todo']
+        todo.note = request.form['note']
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('edit.html', todo=todo)
 
 
 @app.route('/toggle/<int:id>')
